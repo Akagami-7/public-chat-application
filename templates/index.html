@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Web App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="chat-container">
+        <h2>Chat Room</h2>
+
+        <p id="server-status" class="offline">Server is Offline</p>
+        <button id="toggle-server" onclick="toggleServer()">Start Server</button>
+
+        <input id="username" placeholder="Enter username" />
+        <button onclick="joinChat()">Join</button>
+
+        <div id="chat-box" class="hidden">
+            <div id="messages"></div>
+            <input id="message" placeholder="Type a message" />
+            <button onclick="sendMessage()">Send</button>
+            <button onclick="leaveChat()">Exit</button>
+        </div>
+
+        <div id="connected-users">
+            <p>Connected Users: <span id="user-count">0</span></p>
+        </div>
+    </div>
+
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+        
+        // Handle connection
+        socket.on('connect', function() {
+            console.log('Connected to server');
+        });
+
+        // Listen for the server status
+        socket.on('server_status', function(data) {
+            if (data.active) {
+                document.getElementById('server-status').textContent = 'Server is Online';
+                document.getElementById('server-status').className = 'online';
+            } else {
+                document.getElementById('server-status').textContent = 'Server is Offline';
+                document.getElementById('server-status').className = 'offline';
+            }
+        });
+
+        // Toggle server start/stop (for testing purposes)
+        function toggleServer() {
+            socket.emit('server_toggle', { active: true });
+        }
+
+        // Function to join the chat
+        function joinChat() {
+            const username = document.getElementById('username').value;
+            if (username) {
+                socket.emit('join', { username: username });
+                document.getElementById('chat-box').classList.remove('hidden');
+                document.getElementById('username').disabled = true;
+                document.querySelector('button[onclick="joinChat()"]').disabled = true;
+            } else {
+                alert('Please enter a username');
+            }
+        }
+
+        // Send a message
+        function sendMessage() {
+            const message = document.getElementById('message').value;
+            if (message) {
+                socket.emit('message', { message: message });
+                document.getElementById('message').value = '';
+            }
+        }
+
+        // Leave the chat
+        function leaveChat() {
+            socket.emit('disconnect');
+            document.getElementById('chat-box').classList.add('hidden');
+            document.getElementById('username').disabled = false;
+            document.querySelector('button[onclick="joinChat()"]').disabled = false;
+        }
+
+        // Update the number of connected users
+        socket.on('user_list', function(users) {
+            document.getElementById('user-count').textContent = users.length;
+        });
+    </script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

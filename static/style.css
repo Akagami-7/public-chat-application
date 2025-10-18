@@ -1,0 +1,126 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.chat-container {
+    width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    text-align: center;
+}
+
+input, button {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:disabled {
+    background-color: #ccc;
+}
+
+#messages {
+    height: 250px;
+    overflow-y: auto;  /* Allow scrolling */
+    display: flex;
+    flex-direction: column;  /* Stack messages vertically */
+    justify-content: flex-start; /* Align messages at the top */
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    padding: 10px;
+    background-color: #f9f9f9;
+    box-sizing: border-box;
+    width: 100%;  /* Full width for the chat box */
+    max-width: 400px;  /* Optional: Limit the width of the chat container */
+    overflow-wrap: break-word;  /* Ensure long text breaks inside the container */
+}
+
+
+.hidden {
+    display: none;
+}
+
+#connected-users {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.online {
+    color: green;
+}
+
+.offline {
+    color: red;
+}
+
+.username {
+    font-weight: bold;  /* Make the username bold */
+    color: #333;  /* Optional: you can set the color of the username */
+}
+
+/* Alignment styles for messages */
+.message {
+    display: inline-block; /* Allow the bubble to adjust based on content */
+    max-width: 75%;        /* Limit the width of the bubble (adjust as needed) */
+    word-wrap: break-word; /* Break long words if necessary */
+    overflow-wrap: break-word; /* Ensure long words are wrapped */
+    padding: 10px;
+    border-radius: 10px;
+    margin: 5px 0;
+    background-color: #e1e1e1; /* Light background for messages */
+    box-sizing: border-box; /* Ensure padding doesn't push the element out of bounds */
+    clear: both;  /* Ensure the message clears any floats (if needed) */
+}
+
+
+/* Optional: Customize color for the sender's messages */
+.message.sender {
+    background-color: #4CAF50;  /* Green background for the sender */
+    color: white;  /* White text for the sender */
+    text-align: right;  /* Align the sender's message to the right */
+    border-radius: 10px;
+    max-width: 70%;  /* Limit the width of the sender's message */
+    align-self: flex-end; /* Align the sender's message to the right side */
+}
+
+/* Receiver's messages (aligned left) */
+.message.receiver {
+    background-color: #f1f1f1;  /* Light grey background for other users */
+    color: black;  /* Black text for other users */
+    text-align: left;  /* Align the receiver's message to the left */
+    border-radius: 10px;
+    max-width: 70%;  /* Limit the width of the sender's message */
+    align-self: flex-start; /* Align the receiver's message to the left side */
+}
+
+.system-message {
+    text-align: center;
+    font-size: 12px;  /* Smaller text size */
+    color: #888;  /* Light grey color for subtlety */
+    margin: 10px 0;
+    font-style: italic;  /* Optional: make the text italic for differentiation */
+}
