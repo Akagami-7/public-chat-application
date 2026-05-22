@@ -4,7 +4,9 @@ from flask import Flask, render_template, request
 from flask_socketio import SocketIO, send, emit, disconnect
 
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*")
+
+# ✅ ONLY CHANGE: async_mode added for Render (eventlet)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
 users = {}  # Store connected users
 server_active = True  # Flag to control server status
@@ -19,7 +21,7 @@ def handle_connect():
     if server_active:
         emit("server_status", {"active": True})
         # Emit the current user count on connect
-        emit("user_count", len(users), broadcast=True)  # Send connected users count to the client
+        emit("user_count", len(users), broadcast=True)
     else:
         emit("server_status", {"active": False})
         disconnect()  # Disconnect if the server is not active
@@ -30,31 +32,33 @@ def handle_join(data):
     username = data["username"]
     sid = request.sid  # Get the unique session ID for the user
 
-    # Check if the username already exists (either in users or if it's a duplicate)
+    # Check if the username already exists
     if username in users.values():
-        # Send error message back to the client if the username is taken
-        emit('username_error', 'This username is already taken. Please choose another one.', to=sid)
-        return  # Don't add the user to the chat if the username is taken
+        emit(
+            'username_error',
+            'This username is already taken. Please choose another one.',
+            to=sid
+        )
+        return
 
-    # If username is available, add user
-    users[sid] = username  # Store user with their session ID
+    # Add user
+    users[sid] = username
+
     emit("user_list", list(users.values()), broadcast=True)
     send(f"{username} joined the chat.", broadcast=True)
-    # Emit the updated user count
     emit("user_count", len(users), broadcast=True)
 
 @socketio.on("message")
 def handle_message(data):
-    global users
-    sid = request.sid  # Get sender's session ID
+    sid = request.sid
     username = users.get(sid, "Unknown")
     message = data['message']
 
+    # Private message
     if message.startswith('@'):
         target_user = message.split(' ')[0][1:]
         private_message = f"[Private] {username}: {' '.join(message.split(' ')[1:])}"
 
-        # Find the target user
         target_sid = None
         for user_sid, user_name in users.items():
             if user_name == target_user:
@@ -62,26 +66,32 @@ def handle_message(data):
                 break
 
         if target_sid:
-            # Send the private message to both the sender and receiver
-            emit('private_message', {'message': private_message, 'is_private': True, 'from': username}, to=target_sid)
-            emit('private_message', {'message': private_message, 'is_private': True, 'from': username}, to=sid)
+            emit(
+                'private_message',
+                {'message': private_message, 'is_private': True, 'from': username},
+                to=target_sid
+            )
+            emit(
+                'private_message',
+                {'message': private_message, 'is_private': True, 'from': username},
+                to=sid
+            )
         else:
             emit('message', "User not found.", to=sid)
+
     else:
         send(f"{username}: {message}", broadcast=True)
 
 @socketio.on("disconnect")
 def handle_disconnect():
     global users
-    sid = request.sid  # Get user's session ID
+    sid = request.sid
     username = users.pop(sid, None)
 
     if username:
         send(f"{username} left the chat.", broadcast=True)
-        # Send updated user list to all clients
         emit("user_list", list(users.values()), broadcast=True)
-        # Update connected users count by emitting the new count
-        emit("user_count", len(users), broadcast=True)  # Update count when a user disconnects
+        emit("user_count", len(users), broadcast=True)
 
 @socketio.on("server_toggle")
 def toggle_server(data):
@@ -89,19 +99,16 @@ def toggle_server(data):
     server_active = data["active"]
     emit("server_status", {"active": server_active}, broadcast=True)
 
-def on_shutdown(signal, frame):
+def on_shutdown(signal_num, frame):
     global server_active
     server_active = False
-    print("Server is shutting down...")  # Optionally log shutdown
-    # Emit the server status as "offline" to all clients
+    print("Server is shutting down...")
+
     socketio.emit("server_status", {"active": False}, broadcast=True)
-    # Gracefully shut down the server
     socketio.stop()
 
 if __name__ == "__main__":
-    # Register shutdown signal (Ctrl+C or kill)
     signal.signal(signal.SIGINT, on_shutdown)
 
-    print("Server is running...")  # Optional print statement
-    # Start the SocketIO server
-    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+    print("Server is running...")
+    socketio.run(app, host="0.0.0.0", port=5000)
