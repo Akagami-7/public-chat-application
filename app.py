@@ -5,7 +5,6 @@ from flask_socketio import SocketIO, send, emit, disconnect
 
 app = Flask(__name__)
 
-# ✅ ONLY CHANGE: async_mode added for Render (eventlet)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
 users = {}  # Store connected users
